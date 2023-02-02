@@ -88,7 +88,7 @@ have binomial categorical outcomes such as used (which is set to =1) or
 available/un-used (which is set to =0). The basic equation is:
 
 ```math
-\w(x) = \frac{exp^(\beta_ 0+\beta_ 1*X_ 1) + e}{1 + exp(\beta_ 0+\beta_ 1*X_ 1) + e}
+w(x) = \frac{exp^(\beta_ 0+\beta_ 1*X_ 1) + e}{1 + exp(\beta_ 0+\beta_ 1*X_ 1) + e}
 
 ```
 where <sub>w(x)</sub> is the probability of a 1 (in true logistic
