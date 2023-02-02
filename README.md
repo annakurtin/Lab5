@@ -1,7 +1,7 @@
 WILD 562 Lab5 : Multiple Logisitic Regression & Model Selection
 ================
 Mark Hebblewhite
-January 31, 2023
+February 02, 2023
 
 # Lab5: Multiple Logisitic Regression & Model Selectionn
 
@@ -87,10 +87,10 @@ function via the logistic function. This is a very useful model where we
 have binomial categorical outcomes such as used (which is set to =1) or
 available/un-used (which is set to =0). The basic equation is:
 
-```math
+``` math
 w(x) = \frac{exp^(\beta_ 0+\beta_ 1*X_ 1) + e}{1 + exp(\beta_ 0+\beta_ 1*X_ 1) + e}
-
 ```
+
 where <sub>w(x)</sub> is the probability of a 1 (in true logistic
 regression), $\beta_0$ is the baseline probability, or intercept,
 $\beta_1$ is the coefficient of covariates $X_1$, respectively.
@@ -3400,7 +3400,7 @@ top.models.bic
     ## attr(,"rank")
     ## function (x) 
     ## do.call("rank", list(x))
-    ## <environment: 0x0000026f2e2fd9b0>
+    ## <environment: 0x00000257c76db7e8>
     ## attr(,"call")
     ## BIC(x)
     ## attr(,"class")
@@ -3763,6 +3763,9 @@ p7
 ``` r
 dev.off()
 ```
+
+    ## Warning in dev.off(): unable to open TIFF file
+    ## 'C:/Users/Administrator.KJLWS11/Documents/Lab5/Lab5/Output/coefPlot.tiff'
 
     ## png 
     ##   2

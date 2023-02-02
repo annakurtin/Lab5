@@ -969,7 +969,7 @@ biplot(pcawolf, xlim =c(-0.06, 0.04))
 ```
 
 This biplot() tells us that Axis or Component 1 explains most of the variation here, and, is explained mostly by an axis that is a positive linear combination of being at low elevations, close to humans, in good deer/elk/moose habitat, etc.   Lets make a new component based on this orthoganal contrast Axis 1:
-```{r}
+```{r warning=FALSE}
 wolfkde2$Comp.1 <- -0.406*wolfkde2$deer_w2 - 0.370*wolfkde2$moose_w2 - 0.402*wolfkde2$elk_w2 +0.182*wolfkde2$goat_w2 - 0.415*wolfkde2$wolf_w2 + 0.408*wolfkde2$Elevation2 + 0.318*wolfkde2$DistFromHumanAccess2 + 0.233*wolfkde2$DistFromHighHumanAccess2
 
 wolf_comp1 <- glm(used ~ Comp.1, family=binomial (logit), data=wolfkde2)
@@ -978,7 +978,7 @@ hist(wolfkde2$fitted1)
 plot(wolfkde2$fitted1, wolfkde2$Comp.1)
 ```
 Lets examine the relationship between Component 1 of the PCA and the probability of wolf used locations: 
-```{r}
+```{r warning=FALSE}
 figPCA <- ggplot(wolfkde2, aes(x=Comp.1, y=used)) + stat_smooth(method="glm", method.args = list(family="binomial"))
 x.axis = "-0.41*deer - 0.37*moose - 0.4*elk +0.18*goat - 0.42*wolf + 0.41*Elev + 0.32*DistHum + 0.23*DistHighHum"
 figPCA2 <- figPCA + xlab(x.axis)
