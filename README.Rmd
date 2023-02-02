@@ -50,7 +50,10 @@ table(wolfkde$pack, wolfkde$used)
 
 We will use logistic regression, a type of generalized linear model and member of the family of binomial models using the logit link function, that relate the linear predictor vector of covariates to the probability function via the logistic function. This is a very useful model where we have binomial categorical outcomes such as used (which is set to =1) or available/un-used (which is set to =0). The basic equation is:
 
-$$w(x) = \frac{exp^(\beta_ 0+\beta_ 1*X_ 1) + e}{1 + exp(\beta_ 0+\beta_ 1*X_ 1) + e}$$
+```math
+\w(x) = \frac{exp^(\beta_ 0+\beta_ 1*X_ 1) + e}{1 + exp(\beta_ 0+\beta_ 1*X_ 1) + e}
+
+```
 
 where ~w(x)~ is the probability of a 1 (in true logistic regression), $\beta_0$ is the baseline probability, or intercept, $\beta_1$ is the coefficient of covariates $X_1$, respectively. Critically, $e$ is the error term, which we have mostly breezed by so far this semester.  The assumptions of any regression model are said to be ~ $ iid$, where data are 
 +1. identically distributed (homogenously distributed)

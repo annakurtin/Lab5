@@ -87,8 +87,10 @@ function via the logistic function. This is a very useful model where we
 have binomial categorical outcomes such as used (which is set to =1) or
 available/un-used (which is set to =0). The basic equation is:
 
-$$w(x) = \frac{exp^(\{beta}_ {0}+\{beta}_ {1}*{X}_ {1}) + e}{1 + exp(\{beta}_ {0}+\{beta}_ {1}*{X}_ {1}) + e}$$
+```math
+\w(x) = \frac{exp^(\beta_ 0+\beta_ 1*X_ 1) + e}{1 + exp(\beta_ 0+\beta_ 1*X_ 1) + e}
 
+```
 where <sub>w(x)</sub> is the probability of a 1 (in true logistic
 regression), $\beta_0$ is the baseline probability, or intercept,
 $\beta_1$ is the coefficient of covariates $X_1$, respectively.
