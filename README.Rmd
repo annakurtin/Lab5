@@ -1019,3 +1019,9 @@ For suggestions on how to present results of model selection, see Anderson & Bur
 12. Prarie, Y.T. and D.F. Bird. 1989.  Some misconceptions about the spurious correlation problem in the ecological literature.  Oecologia  81: 285-298.
 13. Reineking, B. and B. Schroder. 2006.  Constrain to Perform: Regularization of Habitat Models.  Ecological Modelling  193:675-690.
 14. Tenan, S., R. B. O'Hara, I. Hendriks, and G. Tavecchia. 2014. Bayesian model selection: The steepest mountain to climb. Ecological Modelling 283:62-69.
+
+
+```{r eval=FALSE, include=FALSE}
+knitr::purl(input = "README.Rmd", output = "lab5.R", documentation = 1)
+
+```
