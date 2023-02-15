@@ -228,6 +228,7 @@ There are no firm guidelines for how to detect collinearity, and in today’s la
 2)	Perhaps the most straightforward approach is to look for dramatic changes in the regression coefficients when a predictor variable is added or deleted. This is known as statistical confounding when two covariates are correlated strongly with each other to the point where you can’t separate out their effects on a dependent variable. 
 
 3)	Estimated regression coefficients have the opposite sign to that predicted based on univariate analyses.
+*Understand what each variable does in a univariate analysis before moving to a more complicated model*
 
 4)	Formal detection using variance inflation factors (VIF) based on the tolerance score – which is calculated defined as 1 / (1- R2j) where R2j is the multiple correlation coefficient. 
 
@@ -250,10 +251,12 @@ pairs(~deer_w2+moose_w2+elk_w2+sheep_w2+goat_w2+Elevation2, data=wolfkde, main="
 ```
 Here again we see the now familiar wedge shaped, triangular distribution that is indicative of our poor experimental design again with respect to the sampling of wolf territories across an elevation and distance from human gradient.  
 
+"Missing piece of the pie - there are no areas far from human access that are low in elevation"
+
 The prey model is a bit tougher to interpret because of the integer values of the prey HSI values. 
 
 ### ScatterplotMatrix from Library car
-Next, we will use the scatterplotMatrix() function from the Car Library. This is a bit more graphically pleasing and overlays the linear model fit and 95% CI as well on continuous variables. 
+Next, we will use the scatterplotMatrix() function from the Car (Conditional Autoregressive Strategies) Library. This is a bit more graphically pleasing and overlays the linear model fit and 95% CI as well on continuous variables. 
 ```{r, warning = FALSE}
 ## using car library
 scatterplotMatrix(~deer_w2+moose_w2+elk_w2+sheep_w2+goat_w2+Elevation2, data=wolfkde, main="Scatterplot Matrix")
@@ -267,6 +270,8 @@ scatterplotMatrix(~deer_w2+moose_w2+elk_w2+sheep_w2+goat_w2+Elevation2+DistFromH
 This makes a scatterplot matrix with the upper panel defined as the Pearsons correlation coefficient expressed in Pie graph form (where r = 1.0), red = negative correlation and blue equals a positive correlation. Similarly, the bottom panel displays the strength of the correlation in shaded color. 
 
 In the next two plots I vary the options for the upper and lower panel to variously display the data and linear fit on the bottom panel, and, the 95% ellipse of the correlation coefficient in the bottom. 
+
+Red is negative, blue is positive, pie graph tells you the strength of the correlation 
 
 Find out more here: 
 ```
@@ -300,6 +305,11 @@ ggcorrplot
 ggpairplot<-ggpairs(wolfkde[1:9])
 ggpairplot
 ```
+
+If they're too correlated, they can't be in the same model. 
+*Is this because including correlated variables would artificially increase fit of the model?*
+
+You have to think about if your covariates will be correlated and are worth putting in the time and effort to collect the data
 
 ### Multicollinearity Function
 Here is a simple function for calculating correlations and probabilities, 
@@ -355,8 +365,11 @@ Learn more about vif's in R.
 The square root of the variance inflation factor indicates how much larger the variance is, compared with what it would be if that variable were uncorrelated with the other predictor variables in the model. If the variance inflation factor of a predictor variable were 5.27 (√5.27 = 2.3) this means that the standard deviation for the coefficient of that predictor variable is 2.3 times as large as it would be if that predictor variable were uncorrelated with the other predictor variables. The definition of ‘high’ is somewhat arbitrary but values in the range of 5-10 are commonly used. So in this case, we are really concerned with Elevation. 
 
 ```{r}
+#1: fit a model with a lot of colinear variables
 full.model = glm(used~deer_w2 + elk_w2 +moose_w2 +sheep_w2+goat_w2+Elevation2+DistFromHumanAccess2+DistFromHighHumanAccess2, data =wolfkde, family= binomial(logit))
+# no error message about colinearity 
 summary(full.model)
+# check if your coefficients are stable or bouncing 
 
 vif(full.model)
 ```
@@ -409,9 +422,17 @@ wolfkde$closed = 0
 wolfkde$closed <- wolfkde$closedConif + wolfkde$modConif + wolfkde$openConif + wolfkde$decid + wolfkde$mixed + wolfkde$burn
 ## note I considered burn here as 'closed' - could change. 
 
+# make it into a factor
 wolfkde$closedFactor <-as.factor(wolfkde$closed)
 
+# explore presence of an interaction with ggplot
+# fit two linear regressions, one for open and one for closed 
+## is there the presence of an interaction with closed?
 ggplot(wolfkde, aes(x=DistFromHighHumanAccess2, y=used, fill=closedFactor)) + stat_smooth(method="glm", method.args = list(family="binomial"), level=0.95) #+ facet_grid(closed~.)
+# evidence of an interaction here would mean that the lines are crossing 
+
+# you can use interactions to break up or account for colinearity 
+# what is the difference between interactions and hierarchical models?
 ```
 This shows the effect of distance from high human access varies a lot with whether wolves are in closed cover or not. But does there look to be an interaction? I.e., does the effect of X here on Y vary across levels of the categorical factor? Not really.  Lets look at a box plot. 
 
@@ -424,9 +445,11 @@ So yes, you can only get far away from humans evidently in open landcover types 
 
 However, note that for Rock and Ice and Elevation, the correlation is much more severe, $\rho$= -0.65. However, recall that here we are really mainly concerned where we might want to consider an INTERACTION between the effects of a categorical variable and a continuous variable - IF there is a very strong correlation, then again, from an experimental design view point we cannot separate out effects of elevation or the closed factor variable (in our example).  
 
+*One way to get around this is to break out a part of the model (ex. only look at low elevation)*
+
 But, here, looking at the stat_smoother tells us that despite the probability of wolf use being lower in closed forests, its a completely additive effect. 
 ```{r}
-ggplot(wolfkde, aes(x=Elevation2, y=used, fill=closedFactor)) + stat_smooth(method="glm", method.args = list(family="binomial"), level=0.95) 
+ggplot(wolfkde, aes(x=Elevation2, y=used, fill=closedFactor)) + stat_smooth(method="glm", method.args = list(family="binomial"), level=0.95)  
 ```
 
 In our final step, lets fit the model now
@@ -500,7 +523,11 @@ cover <-  glm(used~closed, data =wolfkde2, family= binomial(logit))
 ## Estimating AIC manually
 
 logLik(cover) ## this is the log likelihood
+## UNDERSTAND LIKELIHOOD
 2*(length(cover$coefficients)) ## this is the number of parameters
+
+# Cand also get the AIC from the output of a model
+summary(cover)
 ```
 
 Note that we can calcualte AIC manually using -2* LL + 2*K where LL is logLik and K is # of parameters (without considering the small sample size correction)
@@ -513,11 +540,16 @@ cover$aic
 
 Lets use using AIC to select interactions...
 ```{r}
+# go back to the four models we had before
+# univariate model of dist to human access
 distha <-  glm(used~DistFromHumanAccess2, data =wolfkde2, family= binomial(logit))
+# main effects model 
 distha.cover <-  glm(used~closed + DistFromHumanAccess2, data =wolfkde2, family= binomial(logit)) ## Main effects only
 
+# interactions
 disthaXcover <-  glm(used~closed + DistFromHumanAccess2 + closed*DistFromHumanAccess2, data =wolfkde2, family= binomial(logit))
-      
+     
+ 
 AIC(cover, distha, distha.cover, disthaXcover)
 ```
 So, here, AIC is telling us that the model with the minimum AIC = 1622, disthaXcover, is the 'best'. Note that it is over 30 AIC units 'smaller', and better, than the next 'closest' model - the model with the main additive effects of distance and cover. We will discuss delta AIC below. Hence, here, we have reasonably STRONG evidence that model disthhaXcover is much better than just the additive model disthha + cover
@@ -530,7 +562,7 @@ disthhaXcover <-  glm(used~closed + DistFromHighHumanAccess2 + closed*DistFromHi
       
 AIC(cover, disthha, disthha.cover, disthhaXcover)
 ```
-Again, , here there is STRONG evidence that model disthhaXcover is much better than the model with the additive main effects. 
+Again, , here there is STRONG evidence that model disthhaXcover is much better than the model with the additive main effects (it has the lowest AIC score so it ranks as the best). 
 
 However, this is tedious, and, how do we know the best models to compare? This brings us to... 
 
@@ -538,8 +570,11 @@ However, this is tedious, and, how do we know the best models to compare? This b
 
 Over the history of statistics, there have been dozens of approaches. First, we will start with Stepwise Model Selection using AIC in the package stepAIC. 
 
+Imperfect way of selecting top models. 
+
 ```{r}
 # Lets review the full.model again
+## this is with everything in it, even things that we shouldn't include
 full.model = glm(used~deer_w2 + elk_w2 +moose_w2 +sheep_w2+goat_w2+Elevation2+DistFromHumanAccess2+DistFromHighHumanAccess2 +closed + closed*DistFromHighHumanAccess2, data =wolfkde2, family= binomial(logit))
 ```
 
@@ -547,7 +582,8 @@ There are two ways to consider stepwise model selection.  Backwards, starting fr
 ```{r}
 ## Backwards selection
 stepAIC(full.model, direction = "backward")
-
+# will iterate through the model and kick out unnecessary coefficients
+## note that this one kicked out the interaction even though AIC showed that the one with interaction was much better
 top.backwards = glm(used ~ deer_w2 + elk_w2 + moose_w2 + sheep_w2 + goat_w2 + Elevation2 + DistFromHumanAccess2 + DistFromHighHumanAccess2, data=wolfkde2,family=binomial(logit))
 summary(top.backwards)
 ```
@@ -555,10 +591,13 @@ summary(top.backwards)
 and second, Forward Stepwise model selection, which starts from the null model and proceeds to the maximum # of parameters specified in the full.model
 ```{r}
 # Forwards selection - First define a NULL model as the starting place
+## Null model is intercept only 
 null.model = glm(used~1,data=wolfkde2,family=binomial(logit))
 ### This time with output from stepAIC supressed 
+# give it the model witht he most input and the least
 stepAIC(null.model, scope=list(upper=full.model, lower= null.model),direction="forward")
 ## lots of output supressed in Rmarkdown
+## this told us to include everything but the interaction (included the colinear variables - this model violaes a bunch of interactions)
 top.forward <- glm(used ~ Elevation2 + DistFromHighHumanAccess2 + 
     moose_w2 + elk_w2 + goat_w2 + DistFromHumanAccess2 + sheep_w2 + 
     deer_w2 + closed, family = binomial(logit), data = wolfkde2)
@@ -575,6 +614,7 @@ But there are a bunch of collinear variables in the model, moose/elk/deer, human
 *This is our first experience that you can throw garbage into a model selection algorithm and get garbage out. * Model selection using anything, AIC, should never replace careful consideration of all the variables in the top model, their collinearity, confounding, and interactions. 
 
 Now what about landcover (with rock Ice as the intercept)??
+We'll use the dummy coded variables to pick it apart
 ```{r}
 full.model.landcov = glm(used~ closedConif +modConif+openConif+decid+regen+mixed+herb+shrub+water+burn+alpine, data =wolfkde2, family= binomial(logit))
 stepAIC(full.model.landcov, direction = "backward")
@@ -600,6 +640,7 @@ To illustrate this, we will work through a class excercise together to come up w
 
 Model set 1: Biotic interactions, deer/elk/moose all too correlated to put in the same model, sheep and goat are OK. 
 ```{r}
+# first make a list of models 
 m.biotic <- list()
 head(m.biotic)
 
@@ -610,7 +651,7 @@ m.biotic[[2]] <- glm(used ~ elk_w2, family=binomial(logit), data=wolfkde2)
 m.biotic[[3]] <- glm(used ~ deer_w2, family=binomial(logit), data=wolfkde2)
 m.biotic[[4]] <- glm(used ~ moose_w2, family=binomial(logit), data=wolfkde2)
 m.biotic[[5]] <- glm(used ~ sheep_w2, family=binomial(logit), data=wolfkde2)
-m.biotic[[6]] <- glm(used ~ goat_w2, family=binomial(logit), data=wolfkde2)
+m.biotic[[6]] <- glm(used ~ goat_w2, family=binomial(logit), data=wolfkde2)# controlling colinearity bc not allowing deer/elk/moose to be in the same model 
 m.biotic[[7]] <- glm(used ~ moose_w2 + sheep_w2, family=binomial(logit), data=wolfkde2)
 m.biotic[[8]] <- glm(used ~ deer_w2 + sheep_w2, family=binomial(logit), data=wolfkde2)
 m.biotic[[9]] <- glm(used ~ elk_w2 + sheep_w2, family=binomial(logit), data=wolfkde2)
@@ -654,6 +695,7 @@ m.biotic[[46]] <- glm(used ~ DistFromHumanAccess2+moose_w2, family=binomial(logi
 m.biotic[[47]] <- glm(used ~ DistFromHumanAccess2+sheep_w2, family=binomial(logit), data=wolfkde2)
 m.biotic[[48]] <- glm(used ~ DistFromHumanAccess2+goat_w2, family=binomial(logit), data=wolfkde2)
 m.biotic[[49]] <- glm(used ~ DistFromHumanAccess2+moose_w2 + sheep_w2, family=binomial(logit), data=wolfkde2)
+# these models will all go into the list - [[]] means the index of the position
                    
 
 ## then name our models .
@@ -662,6 +704,7 @@ m.biotic[[49]] <- glm(used ~ DistFromHumanAccess2+moose_w2 + sheep_w2, family=bi
 model.names.biotic <-c("m0","m1","m2","m3","m4","m5","m6","m7","m8","m9","m10","m11","m12","m13","m14","m15","m16","m17","m18","m19","m20","m21","m22","m23","m24","m25","m26","m27","m28","m29","m30","m31","m32","m33","m34","m35","m36","m37","m38","m39","m40","m41","m42","m43","m44", "m45","m46","m47","m48")
 model.names.biotic <-1:49
 
+# make the candidate list of models 
 aictab(cand.set = m.biotic, modnames = model.names.biotic)
 
 ## OK so the top model was model 41
@@ -669,6 +712,9 @@ aictab(cand.set = m.biotic, modnames = model.names.biotic)
 top.biotic <- glm(used ~ DistFromHumanAccess2+deer_w2 + goat_w2, family=binomial(logit), data=wolfkde2)
 summary(top.biotic)
 vif(top.biotic)
+#look at AIC papers: how to report AIC
+# don't need to report AIC, delta AIC, log likelihood
+## usually only report delta AIC
 ```
 So - not too badly collinear. 
 
@@ -678,6 +724,10 @@ second.biotic <- glm(used ~ DistFromHumanAccess2+elk_w2 + goat_w2, family=binomi
 summary(second.biotic)
 vif(second.biotic)
 ```
+How would you explain this to a manager?
+- deer: contains latent variables elk and moose as well. Recognize that "deer" indicates low elevation ungulates and "goats" indicates high elevation ungulates
+
+
 
 ## Model set 2: Environmental Covariates Only
 ```{r}
@@ -710,6 +760,11 @@ aictab(cand.set = m.env, modnames = model.names.env)
 top.env <- glm(used ~ Elevation2 + DistFromHighHumanAccess2 + openConif+modConif+closedConif+mixed+herb+shrub+water+burn, family=binomial(logit), data=wolfkde2)
 summary(top.env)
 vif(top.env)
+# looks like model 11 was the top model, but model 10 (second best) is probably actually the best doesn't mean its the one you should choose 
+# just bc AIC says that a model is the best doesn't 
+# AIC does not solve colinearity for you!!
+
+# AIC always overfits in use/unuse models where we randomly select the unused locations
 ```
 
 Now - which 'set' of covariates is best? Env? or Biotic?
@@ -734,6 +789,8 @@ http://cran.r-project.org/web/packages/MuMIn/MuMIn.pdf
 
 In today's lab, we never really had to deal with much model selection uncertainty, but, model selection approaches can readily be used to make what is called Multi-model inference across a top set of candidate models. 
 
+Allows you to use dredge, which is better than stepwise 
+
 ```{r}
 # re-run FULL logistic regression model
 top.forward = glm(used ~ deer_w2 + elk_w2 + moose_w2 + sheep_w2 + goat_w2 + Elevation2 + DistFromHumanAccess2 + DistFromHighHumanAccess2 + closed + DistFromHighHumanAccess2*closed, data=wolfkde2,family=binomial(logit), na.action ="na.fail")
@@ -744,13 +801,24 @@ require(MuMIn)
 
 #use dredge function to get all possible models
 x1<-dredge(top.forward)
+
+
+# to drege properly, we trim the list of coefficients we include # re-run FULL logistic regression model
+top.forward2 = glm(used ~ deer_w2 + sheep_w2 + goat_w2 + Elevation2 + DistFromHumanAccess2 + closed + DistFromHighHumanAccess2*closed, data=wolfkde2,family=binomial(logit), na.action ="na.fail")
+summary(top.forward2)
+# doing this will give you a much simplified list 
+# choosing which to kick out of the model selection depends on how well you understand the dataset and which coefficients you understand to be colinear 
+
+# you can do every kind of modelling approach 
 ```
 
 x1 looks at ALL possible model combinations here, there are over 1000 models fit! 10! models = ? models.  Dredge has fit XX models in total out of this candidate set of 19 candidate variables.
 
 ```{r}
 head(x1, n = 10) ## only shows top 10 models fit
+# the way you interpret this - the top scoring model will be at the top, any blank in a column is a coefficient not included in this model 
 plot(x1)
+# how t interpret this: the columns of blue/gray show you how many of the top models each coefficient is in  
 ```
 Plotting is a sometimes useful way to visualize the model selection uncertainty across the top model set. What this plot shows is the variables, their comparative model rank, and variable importance. Here, we really have limited model selection uncertainty, so lets look at the dAIC < 2 models. 
 
@@ -765,6 +833,7 @@ summary(x6)
 ```
 
 This is a model averaged set of coefficients across the top model set. Given we did not have much model selection uncertainty here, this model does not differ that much from our top model(s). 
+*model averaging is controversial*
 
 Next lets do landcover using dredge to whittle down our landcover model list. This is a COMMON approach I take with trying to reduce landcover. 
 ```{r}
@@ -788,12 +857,14 @@ coefficients(top.models[[1]])
 To get them from all the models, you need to make friends with the `lapply` and `sapply` functions, or, the `ldply()` from `plyr`.  For example:
 
 ```{r}
+# over our list of top models, extract the coefficients and make that into a new item of top model coefficients 
 top.model.coef <- lapply(top.models, coefficients)
 #str(top.model.coef)
 ```
 str(top.model.coef) makes a horrendous list. You can collapse those into a single data frame by doing something like this with `ldply`:
 ```{r}
 require(plyr)
+# ldply takes  list, splits it, and spits it back out as a dataframe 
 ldply(top.models, function(l) as.data.frame(t(coefficients(l))))
 ```
 
@@ -831,6 +902,7 @@ What you actually want is confidence intervals.  You can get those out of the `t
 This thing you can quickly ggplot, which is nice:
 
 ```{r}
+# make a caterpillar plot
 ggplot(mutate(CI.table, model = .id), aes(model, estimate)) + 
   geom_errorbar(aes(ymin = CI.low, ymax = CI.high)) + 
   facet_wrap(.~term, scales = "free_y") + theme(axis.text.x = element_text(angle = 90))
@@ -866,6 +938,10 @@ Now lets use the dredge function with BIC
 ```{r}
 x1.bic<-dredge(top.forward, rank=BIC) ## note this now ranks using BIC
 plot(x1.bic)
+# this still includes the colinear variables that we shouldn't include, but the point is it gives us a top scoring model with less parameters than the one chosen with AIC
+
+# BIC is simpler and includes less confounding and more colinear variables - more easily guards against overfitting 
+
 
 ## x1.bic - look at all 
 
@@ -940,11 +1016,13 @@ ggcoef(full.model)
 ```
 Note how the intercept is off the charts, so lets remove that, and play around with some other options such as sorting, exponentiating the coefficients which then displays them as Odds ratio's from a logistic regression model, etc. 
 ```{r}
+# non exponentiated
 ggcoef(full.model, exclude_intercept = TRUE, exponentiate = FALSE, sort = "ascending")
 
+# exponentiated
 ggcoef(full.model, exclude_intercept = TRUE, exponentiate = TRUE, sort = "ascending")
 ```
-
+Exponentiating the output gives you the odds ratios
 
 # Variable reduction using PCA - Principle Components Analysis
 
@@ -961,12 +1039,22 @@ $\displaystyle \min(n-1,p)$. This transformation is defined in such a way that t
 HEre, we will use PCA to attempt to reduce the number of variables we are considering to the minimum number of orthogonal, truly independent vectors and then use these in our GLM. 
 ```{r}
 head(wolfkde2)
+# have to use princomp on numeric variables
 pcawolf <-princomp(na.omit(wolfkde2[1:9]), cor=TRUE)
 summary(pcawolf)
+# FIRST AXIS: orhoganal vector that explains the most variataion in your 9-dimensional data cloud, whats its standard deviation
+# Second line: what percentage of the variation in your dataset that is explained by the variables
+# LISTS it in descending order
 loadings(pcawolf)
+# loadings tell you what each axis is
+## think of them as the "ingrediants" in an axis
+
+# visualize the results
 plot(pcawolf, type="lines")
+
 biplot(pcawolf, xlim =c(-0.06, 0.04))
 ```
+vegan is the main workhorse/package for multivariate statistics 
 
 This biplot() tells us that Axis or Component 1 explains most of the variation here, and, is explained mostly by an axis that is a positive linear combination of being at low elevations, close to humans, in good deer/elk/moose habitat, etc.   Lets make a new component based on this orthoganal contrast Axis 1:
 ```{r warning=FALSE}
@@ -976,6 +1064,10 @@ wolf_comp1 <- glm(used ~ Comp.1, family=binomial (logit), data=wolfkde2)
 wolfkde2$fitted1 <- fitted(wolf_comp1)
 hist(wolfkde2$fitted1)
 plot(wolfkde2$fitted1, wolfkde2$Comp.1)
+
+AIC(wolf_comp1)
+# pretty low AIC that outcompetes other models we've created
+# to communicte the idea of comp 1, put it into a map based on the linear effects of just this axis 
 ```
 Lets examine the relationship between Component 1 of the PCA and the probability of wolf used locations: 
 ```{r warning=FALSE}
