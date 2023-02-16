@@ -39,6 +39,18 @@ packages <- c("car", "tidyverse", "MASS", "AICcmodavg", "MuMIn", "corrgram", "GG
 ipak(packages)
 ```
 
+```{r}
+library(car)
+library(tidyverse)
+library(MASS)
+library(AICcmodavg)
+library(MuMIn)
+library(corrgram)
+library(GGally)
+library(bootStepAIC)
+library(broom)
+```
+
 ## 0.2 Preliminaries: importing data
 ```{r}
 wolfkde <- read.csv(here::here("Data","wolfkde5.csv"), header=TRUE, sep = ",", na.strings="NA", dec=".")
@@ -117,6 +129,8 @@ Note here we have to pass covariate vectors for BOTH $\beta_e$ and $\beta_h$ to 
 plot(wolfkde$DistFromHighHumanAccess2, wolfkde$used, xlim=(c(0,10000)))
 lines(disthumanBnp, prElevMedian.Disthhacc, type="l", ylab= "Pr(Used)")
 lines(disthumanBnp, prDisthhacc, type="l", ylab= "Pr(Used)")
+# now we see the visual representation of the coefficient flipping
+## interpretation would be different in a univariate model vs a multivariate model 
 ```
 
 What is going on?? Why did the coefficient switch sign plotted at the median elevation of 1931m?
@@ -142,15 +156,21 @@ Why are Elevation and DistHighHumanUse changing? They are CORRELATED! Lets forma
 ```{r}
 cor.test(wolfkde$Elevation2, wolfkde$DistFromHighHumanAccess2)
 ```
-We see that indeed, elevaiton and distance from high human access are correlated very strongly, with a Pearsons correlation coefficient r = 0.529, p <2.2e-16. Note that I put more stock in the magnitude of the correlation coefficient, r, than the p-value here. 
+We see that indeed, elevaiton and distance from high human access are correlated very strongly, with a Pearsons correlation coefficient (corr) r = 0.529, p <2.2e-16. X1 and X2 are about twice as likely to be the same. Note that I put more stock in the magnitude of the correlation coefficient, r, than the p-value here. 
 
 Second, we will fit a linear model of distance as a function of elevation to see the regression coefficient between the two, and finally, we will plot elevation and distance using two approaches. 
 ```{r}
 elev_disthha <- lm(DistFromHighHumanAccess2~Elevation2, data=wolfkde)
 summary(elev_disthha)
+# we see from the summary that they are very highly correlated (every increase in elevation leads to 4 unit increase in dist to humans)
 
+# lets visualize the correlation
 plot(wolfkde$Elevation2,wolfkde$DistFromHighHumanAccess2, type="p")
 abline(lm(DistFromHighHumanAccess2~Elevation2, data=wolfkde), col="red")
+# this shows that we need low elevation packs that live far from human activity - without this data we can't break the correlation b/w elevation and distance to human access apart
+# if you see a triangular distribution in your own scatterplots, stop and think about what that means
+
+# this isn't so much about colinear variables as it is about confounding variables - there's no way to break these aoart
 ```
 Can we hold effects of X1 constant while varying X1? Lets use the pairs() to visualize the correlation with elevation as X and Y. 
 ```{r}
@@ -165,7 +185,7 @@ Moreover, we have also seen that our two covariates here, elevation and distance
 Lets examine our 'study design'
 ```{r}
 wolfkde.Used <- subset(wolfkde, wolfkde$used==1)
-wolfkde.Used$elev2F <- cut(wolfkde.Used$Elevation2, 2)
+wolfkde.Used$elev2F <- cut(wolfkde.Used$Elevation2, 2)# cut converts numeric to a factor
 wolfkde.Used$DistFromHighHumanAccess2.2F <- cut(wolfkde.Used$DistFromHighHumanAccess2, 2)
 table(wolfkde.Used$elev2F, wolfkde.Used$DistFromHighHumanAccess2.2F)
 ```
@@ -186,6 +206,7 @@ In statistics, a confounder (also confounding variable, confounding factor, or l
 The best available defense against the possibility of spurious results due to confounding is _experimental design_ . For example, through stratification of sampling effort, proper randomization of samples, large enough samples, etc. The goal of the principles of proper experimental design are to ensure that all potential confounding variables (known and unknown) will be distributed by chance across all study groups and hence will be uncorrelated with the binary variable for inclusion/exclusion in any group.
 
 ```{r}
+# going back to what we had earlier:
 summary(elev)$coefficients[,1:2]
 summary(disthhacc)$coefficients[,1:2]
 summary(elev.disthhacc)$coefficients[,1:2]
@@ -197,6 +218,11 @@ Conversely, the coefficient for distance varies dramatically from  -0.0002  when
 Hosmer and Lemeshow discuss guidelines for confounding in Medical Statistics. Their guidelines are to be alarmed by changes of coefficients that are > and absolute value of 20% when in the presence of multiple variables. This is an astonishingly stringent guideline for almost all regression analyses I have ever seen in ecology!  20% is a great target, but in practice, I have seen 50% and even sign flipping as the major criteria for ecological studies. The latter, especially, is problematic as in our case of elevation and distance. 
 
 With this background, lets continue to investigate and screen for multi-collinearity (many cases of correlations between 2 variables) in our wolfkde dataframe. Lets next test 2 other variables, elk and deer...
+
+
+when building a model, look for stable coefficients and coefficients that don't flip signs in the presence/absence of other variables. 
+
+The methodology is to build models and pick the best one and then beat on it. 
 ```{r}
 ## lets test 2 other variables, elk and deer...
 deer <- glm(used~deer_w2, data =wolfkde, family= binomial(logit))
