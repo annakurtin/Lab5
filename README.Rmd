@@ -13,7 +13,7 @@ r["CRAN"] <- "https://ftp.osuosl.org/pub/cran/"
 options(repos = r)
 ```
 
-# Lab5: Multiple Logisitic Regression & Model Selectionn
+# Lab5: Multiple Logisitic Regression & Model Selection
 
 General introduction to the biological rationale of this lab was given in the Lab 2-4 lab introductions. In Lab 5, we extend the analysis of habitat use by wolves in two wolf packs from 2001-2005 in Banff National Park to multivariate analysis of habitat selection using  multiple logistic regression to estimate a resource selection function (RSF) as a function of the availability of resources.  
 
@@ -36,7 +36,7 @@ ipak <- function(pkg){
 packages <- c("car", "tidyverse", "MASS", "AICcmodavg", "MuMIn", "corrgram", "GGally", "bootStepAIC", "broom")
 
 #run function to install packages
-ipak(packages)
+#ipak(packages)
 ```
 
 ```{r}
@@ -266,7 +266,7 @@ plot(wolfkde$Elevation2 ,wolfkde$goat_w2, type="p")
 abline(lm(goat_w2~Elevation2, data=wolfkde), col="red")
 ## graphically examining collinearity
 ```
-perhaps unsurprisingly, elevaiton is going to be strongly correlated wtih the prey variables, both negatively as here for goat, and positively for things like deer and elk. 
+perhaps unsurprisingly, elevation is going to be strongly correlated wtih the prey variables, both negatively as here for goat, and positively for things like deer and elk. 
 
 ## Scatterplot Matrices
 
@@ -375,7 +375,7 @@ So which covariates have the highest correlations??  Deer, Elk, and Moose all ha
 
 ### Variance Inflation Factors
 
-NExt we will learn about how to screen for multicollinearity using Variance Inflation Factors. The problem with including say, deer and elk in the same model is that they are so highly correlated that 
+Next we will learn about how to screen for multicollinearity using Variance Inflation Factors. The problem with including say, deer and elk in the same model is that they are so highly correlated that 
 
 One definition for VIF is the variance inflation factor (VIF) is the ratio of variance in a multiple linear model , divided by the variance of a model with one term alone (univariate model).  It provides an index that measures how much the variance (the square of the estimate's standard deviation) of an estimated regression coefficient is increased because of collinearity.
 
@@ -505,7 +505,7 @@ Armed with our knowledge of which variables are too collinear to include in the 
 
 This is the most common problem in the development of advanced multiple covariate statisical models. How best to proceed? For example, based on our preliminary exploration and screening for collinearity above, we should not really consider models with moose, deer and elk together. Moreover, we should not consider models with distance to high human use and elevation together. 
 
-This is the age old problem of Model Building and Model Selection in statistics.  An excellent book along with Hosmer and Lemeshow here that guide my philosophy of model selection is Frank Harrel's Regression Modeling Strategies. This really is a fantasti book. 
+This is the age old problem of Model Building and Model Selection in statistics.  An excellent book along with Hosmer and Lemeshow here that guide my philosophy of model selection is Frank Harrel's Regression Modeling Strategies. This really is a fantastic book. 
 
 Harrell, F.E. (2001) Regression modeling strategies: with applications to linear models, logistic regression and survival analysis, Springer-Verlag, New York, NY.
 
@@ -523,7 +523,6 @@ Note there were 252 NA's for some covariates.  Check that there are no other NA'
 
 Akaike Information Criteria (AIC) was conceived on a Tokyo Commuter train by Hirotugo Akaike, a Japanese statistician, based on the concept of Information Theory which was itself based on the concept of Entropy.  
 
-![Hirotugo Akaiki](/Users/mark.hebblewhite/Box Sync/Teaching/UofMcourses/WILD562/Spring2019/Labs/lab5/Akaike.jpg)
 Briefly, AIC is a statistical measure of the relative quality of statistical models for a given set of data (why we have to clean up missing NA's above). Thus, AIC is a useful measure to compare models and find out which model contains the most information in a particular set of data.  AIC fundamentally minimizes the trade-off between the goodness of fit of a model, and the simplicity of a model.  Put another way, it balances between the risks of overfitting and underfitting. 
 
 For a given statistical model and a set of data, we have _k_ number of parameters, and, the Likelihood _L_ of the data, given the model. In the case of Likelihood, then, we have the formula for AIC as
